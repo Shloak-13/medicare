@@ -53,3 +53,16 @@ psql "$DATABASE_URL" -f database/migrations/001_initial_schema.sql
 
 The next step will add the FastAPI backend, environment variables, JWT auth, and seed users.
 
+## Deploy Online
+
+Deployment notes are in:
+
+```text
+docs/deployment.md
+```
+
+The intended production setup is:
+
+- Render for FastAPI and PostgreSQL
+- Vercel for Next.js
+- authenticated access only for private healthcare data

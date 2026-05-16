@@ -2,27 +2,27 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE TABLE roles (
+CREATE TABLE IF NOT EXISTS roles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL UNIQUE,
     description TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE permissions (
+CREATE TABLE IF NOT EXISTS permissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL UNIQUE,
     description TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE role_permissions (
+CREATE TABLE IF NOT EXISTS role_permissions (
     role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
     permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
     PRIMARY KEY (role_id, permission_id)
 );
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     role_id UUID NOT NULL REFERENCES roles(id),
     display_name TEXT NOT NULL,
@@ -36,21 +36,21 @@ CREATE TABLE users (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE family_groups (
+CREATE TABLE IF NOT EXISTS family_groups (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL UNIQUE,
     description TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE family_group_members (
+CREATE TABLE IF NOT EXISTS family_group_members (
     family_group_id UUID NOT NULL REFERENCES family_groups(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (family_group_id, user_id)
 );
 
-CREATE TABLE doctors (
+CREATE TABLE IF NOT EXISTS doctors (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     owner_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -73,7 +73,7 @@ CREATE TABLE doctors (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE medical_records (
+CREATE TABLE IF NOT EXISTS medical_records (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     patient_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     doctor_id UUID REFERENCES doctors(id) ON DELETE SET NULL,
@@ -97,7 +97,7 @@ CREATE TABLE medical_records (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE file_uploads (
+CREATE TABLE IF NOT EXISTS file_uploads (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     patient_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     medical_record_id UUID REFERENCES medical_records(id) ON DELETE SET NULL,
@@ -111,7 +111,7 @@ CREATE TABLE file_uploads (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE medications (
+CREATE TABLE IF NOT EXISTS medications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     patient_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     prescribed_by_doctor_id UUID REFERENCES doctors(id) ON DELETE SET NULL,
@@ -142,7 +142,7 @@ CREATE TABLE medications (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE medication_reminders (
+CREATE TABLE IF NOT EXISTS medication_reminders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     medication_id UUID NOT NULL REFERENCES medications(id) ON DELETE CASCADE,
     reminder_time TIME NOT NULL,
@@ -152,7 +152,7 @@ CREATE TABLE medication_reminders (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE appointments (
+CREATE TABLE IF NOT EXISTS appointments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     patient_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     doctor_id UUID REFERENCES doctors(id) ON DELETE SET NULL,
@@ -166,7 +166,7 @@ CREATE TABLE appointments (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE health_measurements (
+CREATE TABLE IF NOT EXISTS health_measurements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     patient_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     measurement_type TEXT NOT NULL CHECK (
@@ -190,7 +190,7 @@ CREATE TABLE health_measurements (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE audit_events (
+CREATE TABLE IF NOT EXISTS audit_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     actor_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     patient_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -202,23 +202,24 @@ CREATE TABLE audit_events (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_users_relationship_label ON users(relationship_label);
-CREATE INDEX idx_family_group_members_user ON family_group_members(user_id);
-CREATE INDEX idx_doctors_owner ON doctors(owner_user_id);
-CREATE INDEX idx_medical_records_patient_date ON medical_records(patient_user_id, record_date DESC);
-CREATE INDEX idx_medical_records_type ON medical_records(record_type);
-CREATE INDEX idx_file_uploads_patient ON file_uploads(patient_user_id);
-CREATE INDEX idx_file_uploads_record ON file_uploads(medical_record_id);
-CREATE INDEX idx_medications_patient_active ON medications(patient_user_id, is_active);
-CREATE INDEX idx_appointments_patient_time ON appointments(patient_user_id, scheduled_at DESC);
-CREATE INDEX idx_health_measurements_patient_type_time ON health_measurements(patient_user_id, measurement_type, measured_at DESC);
-CREATE INDEX idx_audit_events_actor_time ON audit_events(actor_user_id, created_at DESC);
-CREATE INDEX idx_audit_events_patient_time ON audit_events(patient_user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_users_relationship_label ON users(relationship_label);
+CREATE INDEX IF NOT EXISTS idx_family_group_members_user ON family_group_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_doctors_owner ON doctors(owner_user_id);
+CREATE INDEX IF NOT EXISTS idx_medical_records_patient_date ON medical_records(patient_user_id, record_date DESC);
+CREATE INDEX IF NOT EXISTS idx_medical_records_type ON medical_records(record_type);
+CREATE INDEX IF NOT EXISTS idx_file_uploads_patient ON file_uploads(patient_user_id);
+CREATE INDEX IF NOT EXISTS idx_file_uploads_record ON file_uploads(medical_record_id);
+CREATE INDEX IF NOT EXISTS idx_medications_patient_active ON medications(patient_user_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_appointments_patient_time ON appointments(patient_user_id, scheduled_at DESC);
+CREATE INDEX IF NOT EXISTS idx_health_measurements_patient_type_time ON health_measurements(patient_user_id, measurement_type, measured_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_events_actor_time ON audit_events(actor_user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_events_patient_time ON audit_events(patient_user_id, created_at DESC);
 
 INSERT INTO roles (name, description)
 VALUES
     ('family_member', 'Standard family member who can manage their own health data and read authorized family group data'),
-    ('admin', 'Administrative account for maintenance tasks');
+    ('admin', 'Administrative account for maintenance tasks')
+ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO permissions (name, description)
 VALUES
@@ -226,17 +227,21 @@ VALUES
     ('records:write_own', 'Create, update, and delete own records'),
     ('files:read_authorized', 'Read own and authorized family group files'),
     ('files:write_own', 'Upload and delete own files'),
-    ('analytics:read_authorized', 'Read own and authorized family group analytics');
+    ('analytics:read_authorized', 'Read own and authorized family group analytics')
+ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM roles r
 CROSS JOIN permissions p
-WHERE r.name = 'family_member';
+WHERE r.name = 'family_member'
+ON CONFLICT DO NOTHING;
 
 INSERT INTO family_groups (name, description)
 VALUES
     ('parents', 'Mom and Dad shared access group'),
-    ('siblings', 'Me and Sister shared access group');
+    ('siblings', 'Me and Sister shared access group')
+ON CONFLICT (name) DO NOTHING;
 
 COMMIT;
+
