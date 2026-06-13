@@ -1,68 +1,62 @@
-# Family Healthcare Management Application
+﻿# Family Healthcare Analytics Dashboard
+### Python · Pandas · Plotly · Dash · EDA · Healthcare Domain
 
-Production-style Medicare / family healthcare management app for four family members: Mom, Dad, Me, and Sister.
+An end-to-end analytics project tracking 2 years of family healthcare data across spend, medication adherence, health metrics, and insurance claims.
 
-## Recommended Stack
+## What This Project Demonstrates
 
-- Frontend: Next.js App Router, TypeScript, TailwindCSS, shadcn/ui
-- Backend: FastAPI, Python, SQLAlchemy 2.x, Pydantic
-- Database: PostgreSQL
-- Auth: JWT access tokens with bcrypt password hashing
-- File storage: S3-compatible object storage in production, local disk in development
-- Analytics: SQL-backed metrics exposed through API, rendered with Recharts
-- Deployment: Render/Fly.io/Railway for API, Vercel for frontend, managed PostgreSQL, S3/Cloudinary for files
+- Exploratory data analysis for healthcare cost and utilization patterns
+- KPI dashboard design for executive-style reporting
+- Interactive Plotly visualizations with Dash
+- Domain-specific insight generation for family health, medication adherence, and insurance claims
+- Synthetic data modeling with realistic Indian healthcare cost assumptions
 
-## Current Step
+## Dashboard Preview
 
-Step 1 is the foundation:
+![Monthly healthcare spend trend](assets/dashboard_preview_1.png)
 
-- high-level architecture
-- folder structure
-- normalized PostgreSQL schema
-- authorization model for family dataset boundaries
+![Medication adherence heatmap](assets/dashboard_preview_2.png)
 
-Authentication and APIs come next.
+## Key Insights Found
 
-## Folder Structure
+- Dad shows the clearest cost-risk pattern, driven by increased specialist visits and cardiac checkups in Q3 2025.
+- Medication adherence is lowest for Dad, creating a useful chronic-care monitoring signal.
+- Insurance approvals offset a meaningful portion of family healthcare spend, but rejected and pending claims still create out-of-pocket exposure.
+
+## How to Run
+
+```bash
+pip install -r requirements.txt
+python analytics/generate_data.py
+python analytics/dashboard.py  # opens at localhost:8050
+jupyter notebook analytics/healthcare_analysis.ipynb
+```
+
+## Project Structure
 
 ```text
 .
-|-- apps
-|   |-- api              # FastAPI backend, auth, APIs, DB access
-|   `-- web              # Next.js frontend dashboard
-|-- database
-|   `-- migrations       # SQL migrations
-|-- docs                 # Architecture and implementation notes
-|-- infra                # Deployment and local infrastructure
-`-- docker-compose.yml   # Local PostgreSQL and service wiring
+├── analytics/
+│   ├── charts.py
+│   ├── dashboard.py
+│   ├── export_previews.py
+│   ├── generate_data.py
+│   ├── healthcare_analysis.ipynb
+│   └── data/
+│       └── family_health_data.csv
+├── assets/
+│   ├── dashboard_preview_1.png
+│   └── dashboard_preview_2.png
+├── legacy/
+│   └── previous full-stack healthcare web app code
+├── requirements.txt
+└── README.md
 ```
 
-## Run Locally
+## Tech Stack
 
-The application code will be implemented incrementally. For this foundation step, you can start the database once Docker is available:
+Python · Pandas · NumPy · Plotly · Dash · Jupyter
 
-```bash
-docker compose up -d db
-```
+## Note
 
-Then apply the schema migration using your PostgreSQL client:
-
-```bash
-psql "$DATABASE_URL" -f database/migrations/001_initial_schema.sql
-```
-
-The next step will add the FastAPI backend, environment variables, JWT auth, and seed users.
-
-## Deploy Online
-
-Deployment notes are in:
-
-```text
-docs/deployment.md
-```
-
-The intended production setup is:
-
-- Render for FastAPI and PostgreSQL
-- Vercel for Next.js
-- authenticated access only for private healthcare data
+The synthetic data in this project is modeled on realistic Indian healthcare cost patterns and can be adapted for real clinic, hospital, or insurance datasets.
